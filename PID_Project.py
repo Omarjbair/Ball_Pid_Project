@@ -29,10 +29,6 @@ class Ball:
         self.angle = 0
         self.saturation = 0
         self.value = 0
-        self.sum = 0
-        self.count = 0
-        self.sum_2 = 0
-        self.count_2 = 0
         self.stop = 0
         self.var = 100
         self.trackbar_name = "trackpar_ball"
@@ -42,25 +38,24 @@ class Ball:
     def nothing(self):
         pass
 
-    # get vid
-    def get_vid(self):
-        return self.vid
-
+    #creat trackbar
+    def hue_trackbar(self):
+        cv2.namedWindow(self.trackbar_name)
+        cv2.createTrackbar("min_h", self.trackbar_name, 0, 180, self.nothing)
+        cv2.createTrackbar("max_h", self.trackbar_name, 0, 180, self.nothing)
     # frame function
     def Frame_detect(self):
         _, self.frame = self.vid.read()
         self.frame = cv2.GaussianBlur(self.frame, (7, 7), 0)
         self.hsv = cv2.cvtColor(self.frame, cv2.COLOR_BGR2HSV)
+        self.min_h = cv2.getTrackbarPos("min_h", self.trackbar_name)
+        self.max_h = cv2.getTrackbarPos("max_h", self.trackbar_name)
         lower_saturation = self.hsv[:, :, 1]
         lower_value = self.hsv[:, :, 2]
-        self.value = np.mean(lower_value)
-        self.saturation = np.mean(lower_saturation)
-        if self.value < 40:
-            self.value = 40
-        if self.saturation < 40:
-            self.saturation = 40
-        self.lower = np.array([40, 0, 0])
-        self.upper = np.array([75, 255, 255])
+        self.value = np.average(lower_value)
+        self.saturation = np.average(lower_saturation)
+        self.lower = np.array([self.min_h, int(self.saturation), int(self.value)])
+        self.upper = np.array([self.max_h, 255, 255])
         self.vid.set(cv2.CAP_PROP_AUTO_EXPOSURE, 3)
 
     # masking function
