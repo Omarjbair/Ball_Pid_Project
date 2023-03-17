@@ -31,8 +31,8 @@ class Ball:
         self.value = 0
         self.sum = 0
         self.count = 0
-        self.sum2 = 0
-        self.count2 = 0
+        self.sum_2 = 0
+        self.count_2 = 0
         self.stop = 0
         self.var = 100
         self.trackbar_name = "trackpar_ball"
@@ -42,39 +42,26 @@ class Ball:
     def nothing(self):
         pass
 
-    #get vid
+    # get vid
     def get_vid(self):
         return self.vid
 
-    # Trackbar function
-    def Trackbar(self):
-        cv2.namedWindow(self.trackbar_name)
-        cv2.createTrackbar("exposure", self.trackbar_name, 1, 7, self.nothing)
-        cv2.createTrackbar("min_h", self.trackbar_name, 0, 180, self.nothing)
-        cv2.createTrackbar("max_h", self.trackbar_name, 0, 180, self.nothing)
-
-    def trackbar_elements(self):
-        self.exposure = cv2.getTrackbarPos("exposure", self.trackbar_name)
-        self.min_h = cv2.getTrackbarPos("min_h", self.trackbar_name)
-        self.max_h = cv2.getTrackbarPos("max_h", self.trackbar_name)
-        self.lower = np.array([self.min_h, self.saturation, self.value])
-        self.upper = np.array([self.max_h, 255, 255])
-        self.vid.set(15, -self.exposure)
-
     # frame function
     def Frame_detect(self):
-        self.trackbar_elements()
-        self._, self.frame = self.vid.read()
+        _, self.frame = self.vid.read()
         self.frame = cv2.GaussianBlur(self.frame, (7, 7), 0)
         self.hsv = cv2.cvtColor(self.frame, cv2.COLOR_BGR2HSV)
-        for i in range(self.frame.shape[0]):
-            for j in range(self.frame.shape[1]):
-                self.sum_2 += self.hsv[i, j][2]
-                self.count_2 += 1
-                self.sum += self.hsv[i, j][1]
-                self.count += 1
-        self.value = self.sum_2 // self.count_2
-        self.saturation = self.sum // self.count
+        lower_saturation = self.hsv[:, :, 1]
+        lower_value = self.hsv[:, :, 2]
+        self.value = np.mean(lower_value)
+        self.saturation = np.mean(lower_saturation)
+        if self.value < 40:
+            self.value = 40
+        if self.saturation < 40:
+            self.saturation = 40
+        self.lower = np.array([40, 0, 0])
+        self.upper = np.array([75, 255, 255])
+        self.vid.set(cv2.CAP_PROP_AUTO_EXPOSURE, 3)
 
     # masking function
     def masking(self):
@@ -96,7 +83,8 @@ class Ball:
                     box = np.int0(box)
                     cv2.drawContours(self.frame, [box], -1, (255, 0, 0), 3)
                     (self.x, self.y), (self.w, self.h), self.angle = rect
-        rectangle = cv2.rectangle(self.black.copy(), (int(self.x - self.var), int(self.y - self.var)), (int(self.x + self.var), int(self.y + self.var)), 255, -1)
+        rectangle = cv2.rectangle(self.black.copy(), (int(self.x - self.var), int(self.y - self.var)),
+                                  (int(self.x + self.var), int(self.y + self.var)), 255, -1)
         self.masking_ball = cv2.bitwise_and(self.frame, self.frame, mask=rectangle)
 
     # show frame function
