@@ -2,7 +2,7 @@ import PID_Project
 import cv2
 
 pid = PID_Project.Ball()
-pid.Trackbar()
+
 
 while True:
     pid.show()
